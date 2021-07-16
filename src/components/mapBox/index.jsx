@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
-import ReactDOM from "react-dom";
 import mapboxgl from "mapbox-gl/dist/mapbox-gl-csp";
-import MapboxWorker from "worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker";
+// eslint-disable-next-line import/no-webpack-loader-syntax
+import MapboxWorker from 'worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker';
 import _ from "lodash";
 
 mapboxgl.workerClass = MapboxWorker;

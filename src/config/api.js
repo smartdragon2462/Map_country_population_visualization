@@ -1,1 +1,1 @@
-export const REST_COUNTRIES_API = `https://restcountries.eu/rest/v2/`;
+export const REST_COUNTRIES_ENDPOINT = `https://restcountries.eu/rest/v2`;
