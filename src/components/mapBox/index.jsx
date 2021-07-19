@@ -1,77 +1,64 @@
 import React, { useRef, useEffect, useState } from "react";
-import mapboxgl from "mapbox-gl/dist/mapbox-gl-csp";
-// eslint-disable-next-line import/no-webpack-loader-syntax
-import MapboxWorker from 'worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker';
-import _ from "lodash";
+import ReactMapGl, { Marker } from "react-map-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import "react-map-gl-geocoder/dist/mapbox-gl-geocoder.css";
+import pin_img from "../../assert/pin.png";
 
-mapboxgl.workerClass = MapboxWorker;
-mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_PUBLIC_TOKEN;
+const mapboxToken = process.env.REACT_APP_MAPBOX_PUBLIC_TOKEN;
 
 export default function MapBox(props) {
-  let map;
-  const mapContainer = useRef();
-  const [lat, setLat] = useState(37.8);
-  const [lng, setLng] = useState(-122.5);
-  const [zoom, setZoom] = useState(9);
-  const [coordinates, setCoordinates] = useState([...props.coordinates]);
-  useEffect(() => {
-    if (props.coordinates.length > 0) {
-      setCoordinates([...props.coordinates]);
-      setLng(_.last(props.coordinates)[0]);
-      setLat(_.last(props.coordinates)[1]);
+  const mapContainer = useRef(null);
+  const [countries, setCountries] = useState([...props.countries]);
+  const [dimension, setDimension] = useState([window.innerWidth, window.innerHeight]);
+  const [viewport, setViewport] = useState({
+    latitude: 0,
+    longitude: 0,
+    width: "100vw",
+    height: "100vh",
+    zoom: 2,
+  });
+  
 
-      if (map) {
-        map.on("load", function () {
-          map.addSource("route", {
-            type: "geojson",
-            data: {
-              type: "Feature",
-              properties: {},
-              geometry: {
-                type: "LineString",
-                coordinates: [...coordinates],
-              },
-            },
-          });
-          map.addLayer({
-            id: "route",
-            type: "line",
-            source: "route",
-            layout: {
-              "line-join": "round",
-              "line-cap": "round",
-            },
-            paint: {
-              "line-color": "#888",
-              "line-width": 6,
-            },
-          });
-        });
-      }
+  useEffect(() => {
+    function updateViewer() {
+      setDimension([window.innerWidth, window.innerHeight]);
     }
-  }, [props.coordinates]);
-  useEffect(() => {
-    map = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v11",
-      center: [lng, lat],
-      zoom: zoom,
-    });
-
-    map.on("move", () => {
-      setLng(map.getCenter().lng.toFixed(4));
-      setLat(map.getCenter().lat.toFixed(4));
-      setZoom(map.getZoom().toFixed(2));
-    });
-    return () => map.remove();
-  }, []);
+    setViewport(
+      { 
+        latitude: props.countries.length>0? props.countries[0].latlng[0]: viewport.latitude,
+        longitude: props.countries.length>0? props.countries[0].latlng[1]: viewport.longitude,
+        width: "100vw",
+        height: "100vh", 
+        zoom: viewport.zoom,
+      }
+    )    
+    setCountries(props.countries);
+    window.addEventListener('resize', updateViewer);
+    return () => window.removeEventListener('resize', updateViewer);
+  }, [dimension, props.countries]);
 
   return (
-    <div>
-      <div className="sidebar">
-        Longitude: {lng} | Latitude: {lat} | Zoom: {zoom}
-      </div>
-      <div className="map-container" ref={mapContainer} />
-    </div>
+    <ReactMapGl
+      ref={mapContainer}
+      {...viewport}
+      onViewportChange={(viewport) => setViewport({ ...viewport })}
+      mapboxApiAccessToken={mapboxToken}
+      mapStyle="mapbox://styles/mapbox/streets-v10"
+    >
+      {countries &&
+        countries.map((country, idx) => (
+          country.latlng.length > 0 &&
+            <Marker
+              key={idx}
+              latitude={country.latlng[0]}
+              longitude={country.latlng[1]}
+            >
+              <div className="marker">
+                <div>{country.name}</div>
+              </div>
+              <img src={pin_img} alt="marker" />
+            </Marker>
+        ))}
+    </ReactMapGl>
   );
 }

@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Route, Switch } from 'react-router-dom';
 import Home from './routes/home';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 function App(props) {
   return (

@@ -1,3 +1,12 @@
+/*
+This project is to Create a web application which displays countries’ approximate location on a map and
+compares their populations with an appropriate data visualization.
+We use REST Countries API (https://restcountries.eu/) as REST API.
+And also we used React, Hook, Redux, Bootstrap for web development.
+*/
+
+
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './style.css';
