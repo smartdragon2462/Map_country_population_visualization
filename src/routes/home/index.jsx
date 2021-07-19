@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from "react";
 import MapBox from "../../components/mapBox";
+import { Modal } from 'react-bootstrap';
 import axios from "axios";
 import { REST_COUNTRIES_ENDPOINT } from "../../config/api";
+import { Chart } from 'react-charts'
+
 
 export default function Home() {
+  const axes =[    
+    { primary: true, type: 'ordinal', position: 'bottom' },
+    { position: 'left', type: 'linear', stacked: true }
+  ]
+
   // initialize the variables 
   const [searchTerm, setSearchTerm] = useState("");
   const [allCountryData, setAllCountryData] = useState([]);
   const [searchedCountry, setSearchedCountry] = useState([]);
+  const [populations, setPopulations] = useState(null);
+  const [chartVisible, setChartVisible] = useState(false);
   const [visibleSearchList, setVisibleSearchList] = useState(true);
+
 
   useEffect(() => {
     axios
@@ -33,6 +44,16 @@ export default function Home() {
       // filter country data by search string
       let filtered = allCountryData.filter(obj => obj.name.toLowerCase().includes(search_str.toLowerCase()));
       setSearchedCountry(filtered);
+
+      // filter population data by search string
+      let populationData = filtered.map(elem => [elem.name.replace(/(.{15})..+/, "$1..."), elem.population]);
+      const data = [
+        {
+          label: 'population',
+          data: populationData
+        }
+      ]
+      setPopulations(data);
     }    
   };
 
@@ -45,6 +66,13 @@ const onHandleSelection = (country) => {
     setSearchedCountry([country]);
     setSearchTerm(country.name);   
     setVisibleSearchList(false);
+    const data = [
+      {
+        label: 'population',
+        data: [[country.name.replace(/(.{15})..+/, "$1..."), country.population]]
+      }
+    ]
+    setPopulations(data);
   };
   
 
@@ -52,7 +80,11 @@ const onHandleSelection = (country) => {
     <div className = "map-container" >             
       <div className="search-container">          
         <div className = "search-comp" style={{ borderRadius: searchedCountry.length > 0 && visibleSearchList? '8px 8px 0px 0px' : '8px'}}>
-          <div onClick={()=> console.log("onlick") }>
+          <div onClick={()=>
+            {
+              if( searchedCountry.length>0) setChartVisible(!chartVisible)
+            }
+          }>
             <i className="fa fa-bar-chart" aria-hidden="true"></i>
           </div>
           <input
@@ -78,6 +110,23 @@ const onHandleSelection = (country) => {
       </div>
 
       <MapBox countries={searchedCountry}/>
+
+      {
+        searchedCountry.length > 0 &&
+        <Modal show={chartVisible} onHide={()=>setChartVisible(!chartVisible)} centered>
+          <Modal.Header>
+            <Modal.Title>Popuplation Chart</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+          {
+            populations &&
+            <div className='chart-container'>
+              <Chart data={populations} series={{ type: 'bar' }} axes={axes} tooltip/>
+            </div>
+          }
+          </Modal.Body>
+        </Modal>
+      }
     </div>
   );
 }
